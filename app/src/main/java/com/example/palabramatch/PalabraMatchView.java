@@ -13,6 +13,8 @@ import android.view.SurfaceView;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
+import java.util.List;
+
 public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callback, Runnable {
 
 
@@ -49,15 +51,17 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
     private int currentFrame = 0;
     private long lastFrameTime = System.currentTimeMillis();
 
+    private List<Card> cards;
 
 
 
 
-    public PalabraMatchView(Context context) {
+    public PalabraMatchView(Context context, List<Card> cards) {
         super(context);
         _surfaceHolder = getHolder();
         getHolder().addCallback(this);
         this.gameActivity = (GameActivity) context;
+        this.cards = cards;
 
         _context = context;
 

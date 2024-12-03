@@ -9,9 +9,10 @@ public class Card {
     private int y;
     private int width;
     private int height;
+    private String setTo;
 
     // Constructor
-    public Card(String englishWord, String spanishWord, boolean isFlipped, boolean isMatched, int x, int y, int width, int height) {
+    public Card(String englishWord, String spanishWord, boolean isFlipped, boolean isMatched, int x, int y, int width, int height, String setTo) {
         this.englishWord = englishWord;
         this.spanishWord = spanishWord;
         this.isFlipped = isFlipped;
@@ -20,6 +21,7 @@ public class Card {
         this.y = y;
         this.width = width;
         this.height = height;
+        this.setTo = setTo;
     }
 
     // Getters
@@ -55,6 +57,10 @@ public class Card {
         return height;
     }
 
+    public String getSetTo() {
+        return setTo;
+    }
+
     // Setters
     public void setFlipped(boolean flipped) {
         isFlipped = flipped;
@@ -62,6 +68,10 @@ public class Card {
 
     public void setMatched(boolean matched) {
         isMatched = matched;
+    }
+
+    public void setSetTo(String language) {
+        setTo = language;
     }
 
     // METHODS

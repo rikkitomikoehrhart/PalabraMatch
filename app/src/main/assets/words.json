@@ -1,0 +1,10 @@
+[
+  {"english": "Hello", "spanish": "Hola"},
+  {"english": "Goodbye", "spanish": "Adiós"},
+  {"english": "Thank you", "spanish": "Gracias"},
+  {"english": "Please", "spanish": "Por favor"},
+  {"english": "Yes", "spanish": "Sí"},
+  {"english": "No", "spanish": "No"},
+  {"english": "Dog", "spanish": "Perro"},
+  {"english": "Cat", "spanish": "Gato"}
+]
