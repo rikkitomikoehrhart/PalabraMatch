@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">PalabraMatch</string>
+    <string name="menu_settings">Settings</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="main_title">PalabraMatch</string>
+    <string name="continue_label">Continue</string>
+    <string name="new_game_label">Start</string>
+    <string name="about_label">About</string>
+    <string name="exit_label">Exit</string>
+
+    <string name="settings_label">Settings...</string>
+    <string name="settings_title">PalabraMatch settings</string>
+    <string name="action_settings">PalabraMatch settings</string>
+    <string name="game_title">PalabraMatch</string>
+
+
+    <string name="new_game_title">Difficulty</string>
+    <string name="easy_label">Easy</string>
+    <string name="medium_label">Medium</string>
+    <string name="hard_label">Hard</string>
+
+    <string name="about_title">About PalabraMatch</string>
+    <string name="about_text">\
+Test your memory and build your bilingual skills in a Spanish-English matching game! Flip cards to pair each Spanish word with it\'s English translation, helping you to strengthen your Spanish/English vocabulary as you play!
+</string>
+</resources>
