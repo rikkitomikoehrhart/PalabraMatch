@@ -9,6 +9,7 @@ public class Card {
     private int y;
     private int width;
     private int height;
+    private int currentFrame;
     private String setTo;
 
     // Constructor
@@ -22,6 +23,8 @@ public class Card {
         this.width = width;
         this.height = height;
         this.setTo = setTo;
+
+        this.currentFrame = 0;
     }
 
     // Getters
@@ -61,6 +64,8 @@ public class Card {
         return setTo;
     }
 
+    public int getCurrentFrame() { return currentFrame; }
+
     // Setters
     public void setFlipped(boolean flipped) {
         isFlipped = flipped;
@@ -70,9 +75,19 @@ public class Card {
         isMatched = matched;
     }
 
+    public void setX(int num) { x = num; }
+
+    public void setY(int num) { y = num; }
+
+    public void setWidth(int num) { width = num; }
+
+    public void setHeight(int num) {height = num; }
+
     public void setSetTo(String language) {
         setTo = language;
     }
+
+    public void setCurrentFrame(int num) { currentFrame = num; }
 
     // METHODS
     // Check if a touch event happens to this card
