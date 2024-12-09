@@ -1,35 +1,39 @@
 package com.example.palabramatch;
 
 import android.content.Context;
-
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
+import org.json.JSONArray;
+import org.json.JSONObject;
 import java.io.InputStream;
-import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 
 
 public class WordList {
     public static List<Map<String, String>> getWordPairs(Context context) {
+        List<Map<String, String>> wordPairs = new ArrayList<>();
         try {
-            // Open the JSON file in the assets folder
-            InputStream inputStream = context.getAssets().open("words.json");
-            byte[] buffer = new byte[inputStream.available()];
-            inputStream.read(buffer);
-            inputStream.close();
-
-            // Convert JSON to a String
+            InputStream is = context.getAssets().open("words.json"); // Ensure "words.json" is in the assets folder
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
             String json = new String(buffer, "UTF-8");
 
-            // Parse JSON using Gson
-            Gson gson = new Gson();
-            Type listType = new TypeToken<List<Map<String, String>>>() {}.getType();
-            return gson.fromJson(json, listType);
+            JSONArray jsonArray = new JSONArray(json);
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject obj = jsonArray.getJSONObject(i);
+                Map<String, String> wordPair = new HashMap<>();
+                wordPair.put("id", obj.getString("id"));
+                wordPair.put("english", obj.getString("english"));
+                wordPair.put("spanish", obj.getString("spanish"));
+                wordPairs.add(wordPair);
+
+            }
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
         }
+        return wordPairs;
     }
 }

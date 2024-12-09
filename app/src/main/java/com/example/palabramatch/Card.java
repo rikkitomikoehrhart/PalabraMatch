@@ -14,7 +14,7 @@ public class Card {
     private String setTo;
 
     // Constructor
-    public Card(int id, java.lang.String english, java.lang.String spanish, boolean b, boolean b1, int positionX, int positionY, int cardWidth, int cardHeight, java.lang.String s; String englishWord, String spanishWord, boolean isFlipped, boolean isMatched, int x, int y, int width, int height, String setTo) {
+    public Card(int id, String englishWord, String spanishWord, Boolean isFlipped, Boolean isMatched, int x, int y, int width, int height, String setTo) {
         this.id = id;
         this.englishWord = englishWord;
         this.spanishWord = spanishWord;
@@ -71,11 +71,17 @@ public class Card {
     public int getCurrentFrame() { return currentFrame; }
 
     // Setters
-    public void setFlipped(boolean flipped) {
+    public void setId(int id) { this.id = id; }
+
+    public void setEnglishWord(String englishWord) { this.englishWord = englishWord; }
+
+    public void setSpanishWord(String spanishWord) { this.spanishWord = spanishWord; }
+
+    public void setIsFlipped(boolean flipped) {
         isFlipped = flipped;
     }
 
-    public void setMatched(boolean matched) {
+    public void setIsMatched(boolean matched) {
         isMatched = matched;
     }
 
@@ -99,4 +105,20 @@ public class Card {
         return touchX >= x && touchX <= x + width && touchY >= y && touchY <= y + height;
     }
 
+    @Override
+    public String toString() {
+        return "Card{" +
+                "id=" + id +
+                ", englishWord='" + englishWord + '\'' +
+                ", spanishWord='" + spanishWord + '\'' +
+                ", isFlipped=" + isFlipped +
+                ", isMatched=" + isMatched +
+                ", x=" + x +
+                ", y=" + y +
+                ", width=" + width +
+                ", height=" + height +
+                ", setTo='" + setTo + '\'' +
+                ", currentFrame=" + currentFrame +
+                '}';
+    }
 }

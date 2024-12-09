@@ -2,6 +2,7 @@ package com.example.palabramatch;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
@@ -11,9 +12,10 @@ import android.view.View.OnClickListener;
 
 
 public class MainActivity extends Activity implements OnClickListener {
-   private static final String TAG = "APong";
-   
-   /** Called when the activity is first created. */
+   private static final String TAG = "MainActivity";
+   private static final String PREFS_NAME = "PalabraMatchPrefs";
+
+
    @Override
    public void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
@@ -28,36 +30,55 @@ public class MainActivity extends Activity implements OnClickListener {
       aboutButton.setOnClickListener(this);
       View exitButton = findViewById(R.id.exit_button);
       exitButton.setOnClickListener(this);
+
+      // Check if saved state exists (look for 'score' instead of 'card_0_id')
+      SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+      boolean hasSavedState = prefs.contains("score"); // Better than card_0_id
+      continueButton.setEnabled(hasSavedState);
    }
 
-   // ...
+
+
    public void onClick(View v) {
       int id = v.getId();
       if (id == R.id.about_button) {
          Intent i = new Intent(this, About.class);
          startActivity(i);
-         // More buttons go here (if any) ...
-      } else if (id == R.id.new_button) {
+      }
+      else if (id == R.id.new_button) {
+         clearSavedGameState(); // Clear any previous game data
          Intent g = new Intent(this, GameActivity.class);
+         g.putExtra("startNewGame", true); // Indicate to GameActivity that we want a fresh start
          startActivity(g);
-      } else if (id == R.id.exit_button) {
+      }
+      else if (id == R.id.continue_button) {
+         Intent g = new Intent(this, GameActivity.class);
+         g.putExtra("startNewGame", false); // Tell GameActivity to load the saved state
+         startActivity(g);
+      }
+      else if (id == R.id.exit_button) {
          finish();
       }
    }
-   
+
+
    public void onConfigurationChanged(Configuration newConfig) {
-	    super.onConfigurationChanged(newConfig);
+      super.onConfigurationChanged(newConfig);
+   }
 
-	    Log.d(TAG, "onConfigurationChanged " + newConfig.orientation);
-	}
 
- 
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.activity_main, menu);
-        return true;
-    }
+   @Override
+   public boolean onCreateOptionsMenu(Menu menu) {
+      getMenuInflater().inflate(R.menu.activity_main, menu);
+      return true;
+   }
 
-    
+
+   private void clearSavedGameState() {
+      SharedPreferences prefs = getSharedPreferences("PalabraMatchPrefs", MODE_PRIVATE);
+      SharedPreferences.Editor editor = prefs.edit();
+      editor.clear(); // Clear all saved data
+      editor.apply(); // Apply changes
+   }
 }

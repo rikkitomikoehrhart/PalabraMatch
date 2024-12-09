@@ -1,94 +1,88 @@
-
-
 package com.example.palabramatch;
-
 
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-
-import java.sql.Array;
 import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
+import android.content.SharedPreferences;
+import android.util.Log;
 
 
 
 public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callback, Runnable {
 
-
     private final GameActivity gameActivity;
-
     private Thread _thread;
-
     private int screenWidth;    // screen width
     private int screenHeight;   // screen height
-
     Context _context;
-
     private SurfaceHolder _surfaceHolder;
-
     private boolean _run = false;
 
 
 
-
+    //*********** FOR DEBUGGING ************//
+    private static final String TAG = "PalabraMatchView";
 
 
     //  All variables go in here
 
+    // FRAME RATES
     private final static int MAX_FPS = 60; //desired fps
     private final static int FRAME_PERIOD = 1000 / MAX_FPS; // the frame period
 
+    // COLORS
     private Paint background = new Paint();
     private Paint dark = new Paint();
 
+    // DIMENSIONS
     private int frameWidth;
     private int frameHeight;
-    private Bitmap spriteSheet;
 
+    // ANIMATIONS
+    private Bitmap spriteSheet;
     private int currentFrame = 0;
     private long lastFrameTime = System.currentTimeMillis();
-
-    // Card Arrays
-    private List<Card> allCards;
-    private List<Card> cards;
-
-    // Flip Delay
     private long lastFlipTime = 0;
     private boolean pendingCheck = false;
-
-    // Game Pay Variables
-    private static final int NUM_PAIRS = 4;
-    private boolean isChecking = false;
-    private int flippedCardCount = 0;
-
-    // Score
-    private int score;
-
-
-    // Fireworks
     private Bitmap[] fireworkFrames;
     private int fireworkFrameWidth, fireworkFrameHeight;
     private List<Firework> fireworks = new ArrayList<>();
     private List<Bitmap[]> fireworkFrameSets;
 
 
+    // CARD ARRAYS
+    private List<Card> allCards;
+    private List<Card> cards;
+
+    // GAME PLAY VARIABLES
+    private static final int NUM_PAIRS = 4;
+    private boolean isChecking = false;
+    private int flippedCardCount = 0;
+    private int score;
 
 
-    public PalabraMatchView(Context context, List<Card> allCards) {
+    // SAVED STATE VARIABLES
+    private SharedPreferences preferences;
+
+
+    public PalabraMatchView(Context context, List<Card> allCards, SharedPreferences preferences) {
         super(context);
         _surfaceHolder = getHolder();
         getHolder().addCallback(this);
         this.gameActivity = (GameActivity) context;
         this.allCards = allCards;
         this.cards = new ArrayList<>();
+        this.preferences = preferences;
 
         _context = context;
 
@@ -162,14 +156,18 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
 
     public void pause() {
         _run = false;
-        boolean retry = true;
-        while (retry) {
-            try {
-                _thread.join();
-                retry = false;
-            } catch (InterruptedException e) {
-                // try again shutting down the thread
+        if (_thread != null) { // Check if _thread is null before calling join()
+            boolean retry = true;
+            while (retry) {
+                try {
+                    _thread.join(); // Call join() only if _thread is not null
+                    retry = false;
+                } catch (InterruptedException e) {
+                    Log.e(TAG, "Error joining thread: " + e.getMessage());
+                }
             }
+        } else {
+            Log.w(TAG, "Thread was null when trying to pause.");
         }
     }
 
@@ -179,7 +177,6 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
         score = 0;
 
         // create paints, rectangles, init time, etc
-
         background.setColor(0xff200040);  // should really get this from resource file
         dark.setColor(0xffdddddd);
 
@@ -226,7 +223,7 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
             // If two cards are flipped, initiate delay before checking match
             if (flippedCards.size() == 2 && !pendingCheck) {
                 lastFlipTime = currentTime;
-                pendingCheck = true; // Mark that we're waiting to check
+                pendingCheck = true; // Indicate that we're waiting to check
             }
 
             // Handle fireworks animations
@@ -240,17 +237,15 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
             }
             fireworks.removeAll(finishedFireworks);
 
-            // Combine redraw flags
-            boolean needsRedraw = cardsNeedRedraw || fireworksNeedRedraw;
 
+            boolean needsRedraw = cardsNeedRedraw || fireworksNeedRedraw;
             if (needsRedraw) {
-                invalidate(); // Redraw the view
+                invalidate();
             }
 
             lastFrameTime = currentTime;
         }
     }
-
 
 
     protected void drawImage(Canvas canvas) {
@@ -283,9 +278,9 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
                     if (card.getIsMatched()) {
                         textPaint.setColor(0xFFFFFFFF);
                     } else if (card.getSetTo().equals("english")) {
-                        textPaint.setColor(0xFF4F8795);
-                    } else if (card.getSetTo().equals("spanish")) {
                         textPaint.setColor(0xFFCC5500);
+                    } else if (card.getSetTo().equals("spanish")) {
+                        textPaint.setColor(0xFF4F8795);
                     }
                     textPaint.setTextSize(card.getHeight() / 8); // Adjust text size
                     textPaint.setTextAlign(Paint.Align.CENTER);
@@ -322,7 +317,10 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
 
         super.onSizeChanged(w, h, oldw, oldh);
 
-        initialize(w, h);
+        if (!loadSavedState()) {
+            initialize(w, h);
+        }
+
     }
 
 
@@ -334,54 +332,53 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-
-        _run = true;
-        _thread = new Thread(this);
-        _thread.start();
-
+        if (_thread == null) { // Create a new thread if one is not running
+            _run = true;
+            _thread = new Thread(this);
+            _thread.start(); // Start thread for the game loop
+        }
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
-        // simply copied from sample application LunarLander:
-        // we have to tell thread to shut down & wait for it to finish, or else
-        // it might touch the Surface after we return and explode
         boolean retry = true;
-        _run = false;
-        while (retry) {
-            try {
-                _thread.join();
-                retry = false;
-            } catch (InterruptedException e) {
-                // we will try it again and again...
+        _run = false; // Stop loop in the thread
+        if (_thread != null) {
+            while (retry) {
+                try {
+                    _thread.join(); // Wait for thread to finish
+                    retry = false; // Exit the loop
+                } catch (InterruptedException e) {
+                    Log.e(TAG, "Error in surfaceDestroyed(): " + e.getMessage(), e);
+                }
             }
+            _thread = null;
         }
     }
 
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (isChecking) { return true; }
+        if (isChecking) return true; // Do not allow tapping more cards while checking for matches
 
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
             float touchX = event.getX();
             float touchY = event.getY();
 
-
             for (Card card : cards) {
                 if (card.isTapped(touchX, touchY)) {
-                    if (!card.getIsFlipped() && flippedCardCount < 2) { // Only allow flipping if less than 2 cards are flipped
+                    if (!card.getIsFlipped() && flippedCardCount < 2) {
                         card.setCurrentFrame(0);
-                        card.setFlipped(!card.getIsFlipped()); // Toggle flip state
+                        card.setIsFlipped(true); // Flip the card
                         flippedCardCount++;
-                        invalidate(); // Redraw the view
+                        postInvalidate(); // Redraw the view
                     }
-                    break;
+                    break; // Stop checking other cards
                 }
             }
         }
 
-        return true;
+        return true; // Consume touch event
     }
 
 
@@ -411,6 +408,7 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
 
             cards.add(englishCard);
             cards.add(spanishCard);
+
         }
 
         Collections.shuffle(cards);
@@ -446,7 +444,6 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
 
     }
 
-
     private void drawScore(Canvas canvas) {
         Paint scorePaint = new Paint();
         scorePaint.setColor(0xFFFFFFFF);
@@ -455,83 +452,104 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
 
     }
 
-
     private void checkMatch(List<Card> flippedCards) {
         if (flippedCards.size() != 2) return;
 
-        isChecking = true;
+        isChecking = true; // Do not allow tapping more cards while checking for matches
 
         Card card1 = flippedCards.get(0);
         Card card2 = flippedCards.get(1);
 
+        // If the two cards match
         if (card1.getEnglishWord().equals(card2.getEnglishWord()) &&
                 card1.getSpanishWord().equals(card2.getSpanishWord())) {
-            // Match found
+
+            // Successful match
+            card1.setIsMatched(true);
+            card2.setIsMatched(true);
             card1.setCurrentFrame(13);
             card2.setCurrentFrame(13);
-            card1.setMatched(true);
-            card2.setMatched(true);
 
-            // Increment score
-            score++;
+            score++; // Score + 1
 
-            // Spawn a firework for this match
-            spawnSingleFirework();
 
-            // Check if all matches are complete
-            boolean allMatched = true;
-            for (Card card : cards) {
-                if (!card.getIsMatched()) {
-                    allMatched = false;
-                    break;
-                }
-            }
-            if (allMatched) {
-                spawnMultipleFireworks();
-            }
-        } else {
-            // No match, trigger shake
-            new Thread(() -> {
-                int originalX1 = card1.getX();
-                int originalX2 = card2.getX();
-                int shakeAmplitude = 10; // How far the cards move left and right
-
-                for (int i = 0; i < 6; i++) { // Shake for 6 frames
-                    try {
-                        Thread.sleep(50); // Delay between shake movements
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+            // Save game
+            Handler mainHandler = new Handler(Looper.getMainLooper());
+            mainHandler.post(() -> {
+                gameActivity.saveGameState(); // Save game after match
+                spawnSingleFirework(); // Firework animation
+                // Check if all cards are matched
+                boolean allMatched = true;
+                for (Card card : cards) {
+                    if (!card.getIsMatched()) {
+                        allMatched = false;
+                        break;
                     }
-
-                    // Move cards left and right alternately
-                    int offset = (i % 2 == 0) ? -shakeAmplitude : shakeAmplitude;
-                    card1.setX(originalX1 + offset);
-                    card2.setX(originalX2 + offset);
-
-                    // Redraw the view
-                    postInvalidate();
                 }
-
-                // Reset cards to original position and flip back over
-                card1.setX(originalX1);
-                card2.setX(originalX2);
-                card1.setFlipped(false);
-                card2.setFlipped(false);
-
-                // Redraw one last time
-                postInvalidate();
-
+                if (allMatched) {
+                    spawnMultipleFireworks();
+                }
+                // Reset checking lock
                 flippedCardCount = 0;
-                isChecking = false;
-            }).start();
-            return;
-        }
+                isChecking = false; // Done checking, allow player to continue
+            });
 
-        flippedCardCount = 0;
-        isChecking = false;
+        } else {
+            // Doesn't Match
+            Handler mainHandler = new Handler(Looper.getMainLooper());
+            mainHandler.post(() -> {
+                shakeCards(card1, card2, () -> {
+                    // Reset cards after the shake animation
+                    card1.setIsFlipped(false);
+                    card2.setIsFlipped(false);
+                    card1.setX(card1.getX()); // Reset position
+                    card2.setX(card2.getX()); // Reset position
+                    postInvalidate(); // Update view
+                    flippedCardCount = 0; // Reset flipped card count
+                    isChecking = false; // No longer checking
+                });
+            });
+        }
     }
 
-    private void loadFireworkSprites() {
+    private void shakeCards(Card card1, Card card2, Runnable onComplete) {
+        int originalX1 = card1.getX();
+        int originalX2 = card2.getX();
+        int shakeAmplitude = 10; // How far the cards move left and right
+
+        Handler mainHandler = new Handler(Looper.getMainLooper());
+
+        // Recursive animation method
+        Runnable shakeAnimation = new Runnable() {
+            int frame = 0;
+
+            @Override
+            public void run() {
+                if (frame >= 6) {
+                    // End of shake
+                    card1.setX(originalX1);
+                    card2.setX(originalX2);
+                    postInvalidate();
+                    if (onComplete != null) onComplete.run();
+                    return;
+                }
+
+                // Shake logic (alternates -10, +10, -10, +10, etc.)
+                int offset = (frame % 2 == 0) ? -shakeAmplitude : shakeAmplitude;
+                card1.setX(originalX1 + offset);
+                card2.setX(originalX2 + offset);
+                postInvalidate();
+
+                frame++;
+                mainHandler.postDelayed(this, 50); // Delay 50ms for each frame
+            }
+        };
+
+        // Start the shake animation
+        shakeAnimation.run();
+    }
+
+    public void loadFireworkSprites() {
         int spritesPerSheet = 54; // Frames in each sheet
         int spriteColumns = 54;  // Number of columns in the sheet
         int spriteRows = 1;      // Number of rows in the sheet
@@ -591,8 +609,62 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
         for (int i = 0; i < 6; i++) {
             spawnSingleFirework();
         }
+
+        // Save game after fireworks
+        gameActivity.saveGameState();
     }
 
 
-    
+
+    public List<Card> getCurrentCardState() {
+        return cards;
+    }
+
+
+    public int getScore() {
+        return score;
+    }
+
+    public void setScore(int score) {
+        this.score = score;
+    }
+
+
+
+
+    public boolean loadSavedState() {
+        SharedPreferences prefs = preferences;
+        if (!prefs.contains("score")) {
+            // No save data found, return false to indicate we should create a new game
+            return false;
+        }
+
+        // Restore score
+        score = prefs.getInt("score", 0);
+
+        // Clear and reload cards
+        cards.clear(); // Clear cards list before loading new cards
+        for (int i = 0; i < allCards.size(); i++) {
+            String cardKey = "card_" + i;
+
+            if (prefs.contains(cardKey + "_english")) {
+                Card card = new Card(
+                        prefs.getInt(cardKey + "_id", 0),
+                        prefs.getString(cardKey + "_english", ""),
+                        prefs.getString(cardKey + "_spanish", ""),
+                        prefs.getBoolean(cardKey + "_isFlipped", false),
+                        prefs.getBoolean(cardKey + "_isMatched", false),
+                        prefs.getInt(cardKey + "_x", 0),
+                        prefs.getInt(cardKey + "_y", 0),
+                        prefs.getInt(cardKey + "_width", 100),
+                        prefs.getInt(cardKey + "_height", 150),
+                        prefs.getString(cardKey + "_setTo", "english")
+                );
+                card.setCurrentFrame(prefs.getInt(cardKey + "_currentFrame", 0));
+                cards.add(card);
+            }
+        }
+        return true; // Successfully loaded saved data
+    }
+
 }
