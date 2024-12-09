@@ -32,10 +32,11 @@ public class GameActivity extends Activity {
          int cardHeight = 150;
 
          for (Map<String, String> pair : wordPairs) {
+            String id = pair.get("id");
             String english = pair.get("english");
             String spanish = pair.get("spanish");
 
-            Card englishCard = new Card(english, spanish, false, false, positionX, positionY, cardWidth, cardHeight, "english");
+            Card englishCard = new Card(Integer.parseInt(id), english, spanish, false, false, positionX, positionY, cardWidth, cardHeight, "english");
 
             cards.add(englishCard);
 

@@ -1,6 +1,7 @@
 package com.example.palabramatch;
 
 public class Card {
+    private int id;
     private String englishWord;
     private String spanishWord;
     private boolean isFlipped;
@@ -13,7 +14,8 @@ public class Card {
     private String setTo;
 
     // Constructor
-    public Card(String englishWord, String spanishWord, boolean isFlipped, boolean isMatched, int x, int y, int width, int height, String setTo) {
+    public Card(int id, java.lang.String english, java.lang.String spanish, boolean b, boolean b1, int positionX, int positionY, int cardWidth, int cardHeight, java.lang.String s; String englishWord, String spanishWord, boolean isFlipped, boolean isMatched, int x, int y, int width, int height, String setTo) {
+        this.id = id;
         this.englishWord = englishWord;
         this.spanishWord = spanishWord;
         this.isFlipped = isFlipped;
@@ -28,6 +30,8 @@ public class Card {
     }
 
     // Getters
+    public int getId() { return id; }
+
     public String getEnglishWord() {
         return englishWord;
     }

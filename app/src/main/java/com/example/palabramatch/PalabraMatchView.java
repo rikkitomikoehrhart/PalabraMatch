@@ -283,7 +283,7 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
                     if (card.getIsMatched()) {
                         textPaint.setColor(0xFFFFFFFF);
                     } else if (card.getSetTo().equals("english")) {
-                        textPaint.setColor(0xFF00008B);
+                        textPaint.setColor(0xFF4F8795);
                     } else if (card.getSetTo().equals("spanish")) {
                         textPaint.setColor(0xFFCC5500);
                     }
@@ -395,7 +395,9 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
         for (int i = 0; i < NUM_PAIRS; i++) {
             Card englishCard = allCards.get(i);
 
+
             Card spanishCard = new Card(
+                    englishCard.getId(),
                     englishCard.getEnglishWord(),
                     englishCard.getSpanishWord(),
                     false,
@@ -590,4 +592,7 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
             spawnSingleFirework();
         }
     }
+
+
+    
 }
