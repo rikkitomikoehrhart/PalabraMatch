@@ -43,6 +43,7 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
     // COLORS
     private Paint background = new Paint();
     private Paint dark = new Paint();
+    private Paint timerPaint;
 
     // DIMENSIONS
     private int frameWidth;
@@ -75,6 +76,11 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
     private SharedPreferences preferences;
 
 
+    // TIMER VARIABLES
+    private int timeLeftInSeconds;
+    private Handler timerHandler;
+    private Runnable timerRunnable;
+
     public PalabraMatchView(Context context, List<Card> allCards, SharedPreferences preferences) {
         super(context);
         _surfaceHolder = getHolder();
@@ -103,6 +109,15 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
         frameWidth = xSheetSize / xSprites;
         frameHeight = ySheetSize / ySprites;
 
+
+        // Initialize timer (2 minutes = 120 seconds)
+        timeLeftInSeconds = 120; // Total time in seconds (change to any desired countdown)
+        timerPaint = new Paint();
+        timerPaint.setColor(0xFFFFFFFF); // White color
+        timerPaint.setTextSize(50);
+        timerPaint.setTextAlign(Paint.Align.RIGHT);
+
+        timerHandler = new Handler(Looper.getMainLooper());
     }
 
 
@@ -307,6 +322,10 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
 
         // Draw score
         drawScore(canvas);
+
+        // Draw timer
+        String formattedTime = formatTime(timeLeftInSeconds);
+        canvas.drawText(formattedTime, screenWidth - 40, 75, timerPaint);
     }
 
 
@@ -336,6 +355,8 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
             _run = true;
             _thread = new Thread(this);
             _thread.start(); // Start thread for the game loop
+
+            startTimer();
         }
     }
 
@@ -354,6 +375,8 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
             }
             _thread = null;
         }
+
+        timerHandler.removeCallbacks(timerRunnable);
     }
 
 
@@ -667,4 +690,50 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
         return true; // Successfully loaded saved data
     }
 
+
+
+    private void startTimer() {
+        timerRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (timeLeftInSeconds > 0) {
+                    timeLeftInSeconds--;
+                    if (timeLeftInSeconds == 0) {
+                        triggerGameOver();
+                    }
+                    timerHandler.postDelayed(this, 1000); // Run again in 1 second
+                }
+            }
+        };
+        timerHandler.post(timerRunnable);
+    }
+
+    private void triggerGameOver() {
+        // Stop game updates
+        _run = false;
+
+        // Clear screen except for score and timer
+        cards.clear();
+        fireworks.clear();
+
+        // Draw "Game Over" message
+        Canvas canvas = _surfaceHolder.lockCanvas();
+        if (canvas != null) {
+            drawImage(canvas); // Draw the current screen
+            Paint gameOverPaint = new Paint();
+            gameOverPaint.setColor(0xFFFF0000); // Red color
+            gameOverPaint.setTextSize(100);
+            gameOverPaint.setTextAlign(Paint.Align.CENTER);
+            float centerX = screenWidth / 2f;
+            float centerY = screenHeight / 2f;
+            canvas.drawText("Game Over", centerX, centerY, gameOverPaint);
+            _surfaceHolder.unlockCanvasAndPost(canvas);
+        }
+    }
+
+    private String formatTime(int timeInSeconds) {
+        int minutes = timeInSeconds / 60;
+        int seconds = timeInSeconds % 60;
+        return String.format("%02d:%02d", minutes, seconds);
+    }
 }
