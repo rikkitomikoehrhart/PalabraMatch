@@ -72,6 +72,7 @@ public class GameActivity extends Activity {
    protected void onPause() {
       super.onPause();
       gameView.pause();
+      saveGameState();
    }
 
    @Override
@@ -84,8 +85,11 @@ public class GameActivity extends Activity {
       SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
       SharedPreferences.Editor editor = prefs.edit();
 
-      // Save the score
+      // Save the current score
       editor.putInt("score", gameView.getScore());
+
+      // Save time left on timer
+      editor.putInt("timeLeftInSeconds", gameView.getTimeLeftInSeconds());
 
       // Save card data
       for (int i = 0; i < gameView.getCurrentCardState().size(); i++) {
@@ -107,20 +111,38 @@ public class GameActivity extends Activity {
       editor.apply();
    }
 
-   private void loadGameState() {
-      if (gameView != null) {
-         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+   private boolean loadGameState() {
+      SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+      if (!prefs.contains("score")) return false;
 
-         // Restore score
-         int score = prefs.getInt("score", 0);
-         gameView.setScore(score);
+      int score = prefs.getInt("score", 0);
+      int savedTime = prefs.getInt("timeLeftInSeconds", 120); // Default to 2 min if not found
 
-         // Restore cards
-         gameView.loadSavedState();
+      gameView.setScore(score);
+      gameView.setTimeLeftInSeconds(savedTime); // Restore the time from saved data
 
-         // Load Fireworks
-         gameView.loadFireworkSprites();
+      // Reload card data
+      for (int i = 0; i < gameView.getCurrentCardState().size(); i++) {
+         String cardKey = "card_" + i;
+         if (prefs.contains(cardKey + "_english")) {
+            Card card = new Card(
+                    prefs.getInt(cardKey + "_id", 0),
+                    prefs.getString(cardKey + "_english", ""),
+                    prefs.getString(cardKey + "_spanish", ""),
+                    prefs.getBoolean(cardKey + "_isFlipped", false),
+                    prefs.getBoolean(cardKey + "_isMatched", false),
+                    prefs.getInt(cardKey + "_x", 0),
+                    prefs.getInt(cardKey + "_y", 0),
+                    prefs.getInt(cardKey + "_width", 100),
+                    prefs.getInt(cardKey + "_height", 150),
+                    prefs.getString(cardKey + "_setTo", "english")
+            );
+            card.setCurrentFrame(prefs.getInt(cardKey + "_currentFrame", 0));
+            gameView.addCard(card);
+         }
       }
+
+      return true;
    }
 
 
@@ -129,6 +151,7 @@ public class GameActivity extends Activity {
       super.onDestroy();
       if (gameView != null) {
          gameView.pause();
+         saveGameState();
       }
    }
 }
