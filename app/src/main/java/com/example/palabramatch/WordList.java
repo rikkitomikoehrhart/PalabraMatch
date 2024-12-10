@@ -14,7 +14,8 @@ public class WordList {
     public static List<Map<String, String>> getWordPairs(Context context) {
         List<Map<String, String>> wordPairs = new ArrayList<>();
         try {
-            InputStream is = context.getAssets().open("words.json"); // Ensure "words.json" is in the assets folder
+            // words.json holds the Spanish-English Vocabulary Words
+            InputStream is = context.getAssets().open("words.json");
             int size = is.available();
             byte[] buffer = new byte[size];
             is.read(buffer);

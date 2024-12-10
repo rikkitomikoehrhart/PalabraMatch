@@ -17,6 +17,9 @@ public class GameActivity extends Activity {
 
    private PalabraMatchView gameView;
 
+   private int isSoundEnabled;
+   private int difficultyLevel;
+
    private List<Card> cards; // Corrected name (was allCards before)
 
    @Override
@@ -27,6 +30,7 @@ public class GameActivity extends Activity {
       // Check if we are starting a fresh game
       Intent intent = getIntent();
       boolean startNewGame = intent.getBooleanExtra("startNewGame", false);
+
 
       // Create the list of cards
       cards = new ArrayList<>();
@@ -53,11 +57,19 @@ public class GameActivity extends Activity {
          }
       }
 
+      Intent intentOptions = getIntent();
+      isSoundEnabled = intentOptions.getIntExtra("Sound", 1);
+      difficultyLevel = intentOptions.getIntExtra("Difficulty", 1);
+
+
+
       // Create gameView before calling loadGameState()
       SharedPreferences preferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-      gameView = new PalabraMatchView(this, cards, preferences);
+      gameView = new PalabraMatchView(this, cards, preferences, isSoundEnabled, difficultyLevel);
       setContentView(gameView);
       gameView.requestFocus();
+
+
 
       // Call loadGameState() only after gameView is initialized
       if (!startNewGame) {

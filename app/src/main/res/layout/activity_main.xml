@@ -1,5 +1,6 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/soundC"
     android:layout_width="match_parent"
     android:layout_height="fill_parent"
@@ -43,7 +44,8 @@
                 android:textAlignment="center"
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium"
                 android:textColor="#FFFFFF"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                tools:ignore="TextContrastCheck" />
 
             <Button
                 android:id="@+id/new_button"
@@ -55,7 +57,8 @@
                 android:text="@string/new_game_label"
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium"
                 android:textColor="@color/white"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                tools:ignore="TextContrastCheck" />
 
         </TableRow>
 
@@ -74,7 +77,8 @@
                 android:text="@string/about_label"
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium"
                 android:textColor="@color/white"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                tools:ignore="TextContrastCheck" />
 
             <Button
                 android:id="@+id/continue_button"
@@ -86,17 +90,88 @@
                 android:text="@string/continue_label"
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium"
                 android:textColor="@color/white"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                tools:ignore="TextContrastCheck" />
 
         </TableRow>
 
     </TableLayout>
 
-    <CheckBox
-        android:id="@+id/soundCheck"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Sound"
-        android:textColor="@color/white" />
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <EditText
+            android:id="@+id/difficultyMenuTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:ems="10"
+            android:fontFamily="casual"
+            android:inputType="text"
+            android:text="Difficulty"
+            android:textAlignment="center"
+            android:textAppearance="@style/TextAppearance.AppCompat.Large"
+            android:textColor="@color/white"
+            android:textStyle="bold" />
+
+        <RadioGroup
+            android:id="@+id/difficultyMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/easy"
+                android:layout_width="116dp"
+                android:layout_height="wrap_content"
+                android:buttonTint="#67B0B2"
+                android:checked="true"
+                android:text="Easy - A1"
+                android:textColor="@color/white" />
+
+            <RadioButton
+                android:id="@+id/medium"
+                android:layout_width="116dp"
+                android:layout_height="wrap_content"
+                android:buttonTint="#67B0B2"
+                android:text="Medium - A2"
+                android:textColor="@color/white" />
+
+            <RadioButton
+                android:id="@+id/hard"
+                android:layout_width="116dp"
+                android:layout_height="wrap_content"
+                android:buttonTint="#67B0B2"
+                android:text="Hard - B1"
+                android:textColor="@color/white" />
+
+        </RadioGroup>
+
+        <EditText
+            android:id="@+id/soundMenuTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:ems="10"
+            android:fontFamily="casual"
+            android:inputType="text"
+            android:text="Sound"
+            android:textAlignment="center"
+            android:textAppearance="@style/TextAppearance.AppCompat.Large"
+            android:textColor="@color/white"
+            android:textStyle="bold" />
+
+        <CheckBox
+            android:id="@+id/soundCheck"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:buttonTint="#67B0B2"
+            android:text="Sound Off"
+            android:textColor="@color/white" />
+
+    </LinearLayout>
 
 </LinearLayout>

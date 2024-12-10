@@ -66,7 +66,6 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
     private List<Card> cards;
 
     // GAME PLAY VARIABLES
-    private static final int NUM_PAIRS = 4;
     private boolean isChecking = false;
     private int flippedCardCount = 0;
     private int score;
@@ -79,13 +78,41 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
     // TIMER VARIABLES
     private int timeLeftInSeconds;
     private Handler timerHandler = new Handler(Looper.getMainLooper());
+    private int EASY_TIME = 60;
+    private int MEDIUM_TIME = 90;
+    private int HARD_TIME = 120;
+
+
+    // DIFFICULTY VARIABLES
+    private int totalCards;
+    private int columns;
+    private int rows;
+    private int fontSize;
+    private int EASY_CARDS = 4;
+    private int EASY_COLS = 2;
+    private int EASY_ROWS = 4;
+    private int EASY_FONT = 50;
+    private int MEDIUM_CARDS = 6;
+    private int MEDIUM_COLS = 3;
+    private int MEDIUM_ROWS = 4;
+    private int MEDIUM_FONT = 40;
+    private int HARD_CARDS = 9;
+    private int HARD_COLS = 3;
+    private int HARD_ROWS = 6;
+    private int HARD_FONT = 40;
+
+
+
+
+    // GAME OPTIONS
+    int sound = 1;
+    int difficulty = 1;
 
 
 
 
 
-
-    public PalabraMatchView(Context context, List<Card> allCards, SharedPreferences preferences) {
+    public PalabraMatchView(Context context, List<Card> allCards, SharedPreferences preferences, int sound, int difficulty) {
         super(context);
         _surfaceHolder = getHolder();
         getHolder().addCallback(this);
@@ -93,6 +120,8 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
         this.allCards = allCards;
         this.cards = new ArrayList<>();
         this.preferences = preferences;
+        this.sound = sound;
+        this.difficulty = difficulty;
 
         _context = context;
 
@@ -114,14 +143,17 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
         frameHeight = ySheetSize / ySprites;
 
 
-        // Initialize timer (2 minutes = 120 seconds)
-        timeLeftInSeconds = 120; // Total time in seconds (change to any desired countdown)
+        // Initialize Difficulty
+        initializeDifficulty();
+
+
+        // Initialize times
         timerPaint = new Paint();
         timerPaint.setColor(0xFFFFFFFF); // White color
         timerPaint.setTextSize(50);
         timerPaint.setTextAlign(Paint.Align.RIGHT);
-
         timerHandler = new Handler(Looper.getMainLooper());
+
     }
 
 
@@ -193,7 +225,7 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
         screenWidth = w;
         screenHeight = h;
         score = 0;
-        startTimer(120);
+        startTimer(timeLeftInSeconds);
 
         // create paints, rectangles, init time, etc
         background.setColor(0xff200040);  // should really get this from resource file
@@ -213,7 +245,7 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
         boolean cardsNeedRedraw = false;
         boolean fireworksNeedRedraw = false;
 
-        if (currentTime - lastFrameTime > 100) { // 100ms per frame
+        if (currentTime - lastFrameTime > 50) { // 100ms per frame
 
             // Handle card animations
             List<Card> flippedCards = new ArrayList<>();
@@ -233,7 +265,7 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
 
             // Handle pending match check
             if (pendingCheck) {
-                if (currentTime - lastFlipTime > 1000) { // 1-second delay
+                if (currentTime - lastFlipTime > 500) { // 1/2-second delay
                     checkMatch(flippedCards); // Perform match check
                     pendingCheck = false; // Reset pending flag
                 }
@@ -297,11 +329,11 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
                     if (card.getIsMatched()) {
                         textPaint.setColor(0xFFFFFFFF);
                     } else if (card.getSetTo().equals("english")) {
-                        textPaint.setColor(0xFFCC5500);
-                    } else if (card.getSetTo().equals("spanish")) {
                         textPaint.setColor(0xFF4F8795);
+                    } else if (card.getSetTo().equals("spanish")) {
+                        textPaint.setColor(0xFFCC5500);
                     }
-                    textPaint.setTextSize(card.getHeight() / 8); // Adjust text size
+                    textPaint.setTextSize(fontSize); // Adjust text size
                     textPaint.setTextAlign(Paint.Align.CENTER);
 
                     float textX = card.getX() + card.getWidth() / 2.0f;
@@ -360,7 +392,7 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
             _thread.start(); // Start thread for the game loop
 
             if (timeLeftInSeconds <= 0) {
-                timeLeftInSeconds = 120;
+                initializeDifficulty();
             }
             startTimer(timeLeftInSeconds);
         }
@@ -413,13 +445,40 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
 
 
     private void setupGameCards() {
+        // Clear the cards array
         cards.clear();
 
-        Collections.shuffle(allCards);
+        // Create variables for the length of cards (100) per difficulty and
+        // a temporary array to hold the cards
+        int length = 100;
+        List<Card> tempCards = new ArrayList<>();
+
+        // Determine the index of cards based on difficulty
+        if (difficulty == 3) {
+            // Cards with ids 200-299 are B1 Vocabulary Words and are for HARD Mode
+            for (int i = 200; i <= 299; i++) {
+                tempCards.add(allCards.get(i));
+            }
+        } else if (difficulty == 2) {
+            // Cards with ids 100-199 are A2 Vocabulary Words and are for MEDIUM Mode
+            for (int i = 100; i <= 199; i++) {
+                tempCards.add(allCards.get(i));
+            }
+        } else {
+            // Cards with ids 0-99 are A1 Vocabulary Words and are for EASY Mode
+            // This is also the default
+            for (int i = 0; i <= 99; i++) {
+                tempCards.add(allCards.get(i));
+            }
+        }
+
+
+        // Shuffle the tempCards deck so that the list is not in order
+        Collections.shuffle(tempCards);
 
         // For each english card, make a corresponding spanish card
-        for (int i = 0; i < NUM_PAIRS; i++) {
-            Card englishCard = allCards.get(i);
+        for (int i = 0; i < totalCards; i++) {
+            Card englishCard = tempCards.get(i);
 
 
             Card spanishCard = new Card(
@@ -440,11 +499,11 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
 
         }
 
+        // Shuffle cards again so that english and spanish cooresponding
+        // cards aren't right next to each other
         Collections.shuffle(cards);
 
         // Calculate card dimensions
-        int columns = 2; // Number of columns
-        int rows = 4;    // Number of rows
         int padding = 20;
 
         int cardWidth = (screenWidth - (columns + 1) * padding) / columns;
@@ -580,7 +639,7 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
                 postInvalidate();
 
                 frame++;
-                mainHandler.postDelayed(this, 50); // Delay 50ms for each frame
+                mainHandler.postDelayed(this, 20); // Delay 20ms for each frame
             }
         };
 
@@ -596,14 +655,13 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
 
         fireworkFrameSets = new ArrayList<>();
 
-        fireworkFrameWidth = 800;
-        fireworkFrameHeight = 800;
+        fireworkFrameWidth = 600;
+        fireworkFrameHeight = 600;
 
         for (int sheetIndex = 0; sheetIndex < totalSheets; sheetIndex++) {
             int resId = getResources().getIdentifier("firework_" + sheetIndex, "drawable", _context.getPackageName());
             Bitmap spritesheet = BitmapFactory.decodeResource(getResources(), resId);
             if (spritesheet == null) {
-                System.out.println("Error: Spritesheet firework_" + sheetIndex + " not found!");
                 continue;
             }
 
@@ -630,11 +688,10 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
             fireworkFrameSets.add(extractedFrames.toArray(new Bitmap[extractedFrames.size()]));
         }
 
-        System.out.println("Total firework frame sets loaded: " + fireworkFrameSets.size());
     }
 
     private void spawnSingleFirework() {
-        int margin = 100; // Minimum distance from edges
+        int margin = 20; // Minimum distance from edges
         int x = margin + (int) (Math.random() * (screenWidth - fireworkFrameWidth - 2 * margin));
         int y = margin + (int) (Math.random() * (screenHeight - fireworkFrameHeight - 2 * margin));
 
@@ -783,5 +840,33 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
     public void setTimeLeftInSeconds(int seconds) {
         timeLeftInSeconds = seconds;
         startTimer(timeLeftInSeconds); // Restart the timer when it is restored
+    }
+
+    public void initializeDifficulty() {
+        if (difficulty == 1) {
+            timeLeftInSeconds = EASY_TIME;
+            totalCards = EASY_CARDS;
+            columns = EASY_COLS;
+            rows = EASY_ROWS;
+            fontSize = EASY_FONT;
+        } else if (difficulty == 2) {
+            timeLeftInSeconds = MEDIUM_TIME;
+            totalCards = MEDIUM_CARDS;
+            columns = MEDIUM_COLS;
+            rows = MEDIUM_ROWS;
+            fontSize = MEDIUM_FONT;
+        } else if (difficulty == 3) {
+            timeLeftInSeconds = HARD_TIME;
+            totalCards = HARD_CARDS;
+            columns = HARD_COLS;
+            rows = HARD_ROWS;
+            fontSize = HARD_FONT;
+        } else {
+            timeLeftInSeconds = EASY_TIME;
+            totalCards = EASY_CARDS;
+            columns = EASY_COLS;
+            rows = EASY_ROWS;
+            fontSize = EASY_FONT;
+        }
     }
 }
