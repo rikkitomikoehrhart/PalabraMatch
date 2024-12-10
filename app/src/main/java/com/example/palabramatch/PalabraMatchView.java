@@ -386,14 +386,11 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        if (_thread == null) { // Create a new thread if one is not running
+        if (_thread == null || !_thread.isAlive()) {
             _run = true;
             _thread = new Thread(this);
-            _thread.start(); // Start thread for the game loop
-
-            if (timeLeftInSeconds <= 0) {
-                initializeDifficulty();
-            }
+            _thread.start();
+            loadFireworkSprites();
             startTimer(timeLeftInSeconds);
         }
     }
@@ -401,19 +398,18 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
         boolean retry = true;
-        _run = false; // Stop loop in the thread
+        _run = false;
         if (_thread != null) {
             while (retry) {
                 try {
-                    _thread.join(); // Wait for thread to finish
-                    retry = false; // Exit the loop
+                    _thread.join();
+                    retry = false;
                 } catch (InterruptedException e) {
                     Log.e(TAG, "Error in surfaceDestroyed(): " + e.getMessage(), e);
                 }
             }
-            _thread = null;
+            _thread = null; // Avoid multiple threads being created
         }
-
         timerHandler.removeCallbacks(timerRunnable);
     }
 
@@ -869,4 +865,9 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
             fontSize = EASY_FONT;
         }
     }
+
+    public void resume() {
+        surfaceCreated(_surfaceHolder);
+    }
+
 }

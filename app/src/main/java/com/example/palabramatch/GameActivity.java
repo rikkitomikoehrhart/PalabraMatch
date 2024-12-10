@@ -25,7 +25,6 @@ public class GameActivity extends Activity {
    @Override
    protected void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
-      Log.d(TAG, "onCreate");
 
       // Check if we are starting a fresh game
       Intent intent = getIntent();
@@ -64,10 +63,13 @@ public class GameActivity extends Activity {
 
 
       // Create gameView before calling loadGameState()
-      SharedPreferences preferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-      gameView = new PalabraMatchView(this, cards, preferences, isSoundEnabled, difficultyLevel);
-      setContentView(gameView);
-      gameView.requestFocus();
+      if (gameView == null) {
+         SharedPreferences preferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+         gameView = new PalabraMatchView(this, cards, preferences, isSoundEnabled, difficultyLevel);
+         setContentView(gameView);
+         gameView.requestFocus();
+      }
+
 
 
 
@@ -83,14 +85,19 @@ public class GameActivity extends Activity {
    @Override
    protected void onPause() {
       super.onPause();
-      gameView.pause();
       saveGameState();
+      if (gameView != null) {
+         gameView.pause();
+      }
    }
 
    @Override
    protected void onResume() {
       super.onResume();
-      loadGameState();
+      if (gameView != null) {
+         gameView.loadFireworkSprites();
+         gameView.resume();
+      }
    }
 
    public void saveGameState() {
@@ -157,13 +164,20 @@ public class GameActivity extends Activity {
       return true;
    }
 
+   @Override
+   public void onBackPressed() {
+      saveGameState();
+      finish();
+   }
+
 
    @Override
    protected void onDestroy() {
       super.onDestroy();
       if (gameView != null) {
          gameView.pause();
-         saveGameState();
       }
    }
+
+
 }
