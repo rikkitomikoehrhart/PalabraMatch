@@ -3,6 +3,7 @@ package com.example.palabramatch;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.PixelFormat;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.MotionEvent;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.ArrayList;
 import android.content.SharedPreferences;
 import android.util.Log;
+import android.graphics.Color;
 
 
 
@@ -44,6 +46,7 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
     private Paint background = new Paint();
     private Paint dark = new Paint();
     private Paint timerPaint;
+    private static final int BACKGROUND_COLOR = Color.parseColor("#306F77");
 
     // DIMENSIONS
     private int frameWidth;
@@ -81,6 +84,7 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
     private int EASY_TIME = 60;
     private int MEDIUM_TIME = 90;
     private int HARD_TIME = 120;
+    private boolean isTimerRunning = false;
 
 
     // DIFFICULTY VARIABLES
@@ -129,9 +133,7 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
         setFocusableInTouchMode(true);
 
         // Bitmap
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inScaled = false;
-        spriteSheet = BitmapFactory.decodeResource(getResources(), R.drawable.card, options);
+        spriteSheet = loadBitmap(R.drawable.card);
 
         // Calculate frame dimensions
         int xSprites = 4;
@@ -206,18 +208,7 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
     }
 
     public void pause() {
-        _run = false;
-        if (_thread != null) { // Check if _thread is null before calling join()
-            boolean retry = true;
-            while (retry) {
-                try {
-                    _thread.join(); // Call join() only if _thread is not null
-                    retry = false;
-                } catch (InterruptedException e) {
-                    Log.e(TAG, "Error joining thread: " + e.getMessage());
-                }
-            }
-        }
+        stopThread();
         timerHandler.removeCallbacks(timerRunnable);
     }
 
@@ -228,7 +219,7 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
         startTimer(timeLeftInSeconds);
 
         // create paints, rectangles, init time, etc
-        background.setColor(0xff200040);  // should really get this from resource file
+        background.setColor(BACKGROUND_COLOR);  // should really get this from resource file
         dark.setColor(0xffdddddd);
 
         // Load Fireworks Sprites
@@ -386,11 +377,11 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        if (_thread == null || !_thread.isAlive()) {
-            _run = true;
-            _thread = new Thread(this);
-            _thread.start();
-            loadFireworkSprites();
+        startThread();
+
+        loadFireworkSprites();
+
+        if(!isTimerRunning) {
             startTimer(timeLeftInSeconds);
         }
     }
@@ -643,6 +634,13 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
         shakeAnimation.run();
     }
 
+
+    private Bitmap loadBitmap(int resId) {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inScaled = false;
+        return BitmapFactory.decodeResource(getResources(), resId, options);
+    }
+
     public void loadFireworkSprites() {
         int spritesPerSheet = 54; // Frames in each sheet
         int spriteColumns = 54;  // Number of columns in the sheet
@@ -656,7 +654,7 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
 
         for (int sheetIndex = 0; sheetIndex < totalSheets; sheetIndex++) {
             int resId = getResources().getIdentifier("firework_" + sheetIndex, "drawable", _context.getPackageName());
-            Bitmap spritesheet = BitmapFactory.decodeResource(getResources(), resId);
+            Bitmap spritesheet = loadBitmap(resId);
             if (spritesheet == null) {
                 continue;
             }
@@ -769,9 +767,11 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
 
 
     private void startTimer(int totalTimeInSeconds) {
-        timerHandler.removeCallbacks(timerRunnable);
-        timeLeftInSeconds = totalTimeInSeconds; // Start the timer with total time
-        timerHandler.postDelayed(timerRunnable, 1000);
+        if (!isTimerRunning) {
+            timeLeftInSeconds = totalTimeInSeconds; // Start the timer with total time
+            timerHandler.postDelayed(timerRunnable, 1000);
+            isTimerRunning = true;
+        }
     }
 
     private Runnable timerRunnable = new Runnable() {
@@ -869,5 +869,33 @@ public class PalabraMatchView extends SurfaceView implements SurfaceHolder.Callb
     public void resume() {
         surfaceCreated(_surfaceHolder);
     }
+
+
+
+
+    private void startThread() {
+        if (_thread == null) {
+            _run = true;
+            _thread = new Thread(this);
+            _thread.start();
+        }
+    }
+
+    private void stopThread() {
+        _run = false;
+        if (_thread != null) {
+            try {
+                _thread.join();
+            } catch (InterruptedException e) {
+                Log.e(TAG, "Error joining thread: " + e.getMessage());
+            }
+            _thread = null;
+        }
+    }
+
+
+
+
+
 
 }

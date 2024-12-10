@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -119,6 +118,11 @@ public class MainActivity extends Activity implements OnClickListener {
          // default to easy
          return 1;
       }
+   }
+
+   @Override
+   public void onBackPressed() {
+      finish();
    }
 
 }

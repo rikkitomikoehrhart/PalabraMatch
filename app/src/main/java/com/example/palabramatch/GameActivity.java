@@ -33,28 +33,7 @@ public class GameActivity extends Activity {
 
       // Create the list of cards
       cards = new ArrayList<>();
-      List<Map<String, String>> wordPairs = WordList.getWordPairs(this);
-      if (wordPairs != null) {
-         for (Map<String, String> pair : wordPairs) {
-            String id = pair.get("id");
-            String english = pair.get("english");
-            String spanish = pair.get("spanish");
-
-            Card englishCard = new Card(
-                    Integer.parseInt(id),
-                    english,
-                    spanish,
-                    false,
-                    false,
-                    0,
-                    0,
-                    100,
-                    150,
-                    "english"
-            );
-            cards.add(englishCard);
-         }
-      }
+      loadCards();
 
       Intent intentOptions = getIntent();
       isSoundEnabled = intentOptions.getIntExtra("Sound", 1);
@@ -82,23 +61,39 @@ public class GameActivity extends Activity {
       }
    }
 
+
    @Override
    protected void onPause() {
       super.onPause();
-      saveGameState();
-      if (gameView != null) {
-         gameView.pause();
-      }
+      handleGamePause();
    }
 
    @Override
    protected void onResume() {
       super.onResume();
+      handleGameResume();
+   }
+
+   @Override
+   protected void onDestroy() {
+      super.onDestroy();
+      handleGamePause();
+   }
+
+   private void handleGamePause() {
       if (gameView != null) {
-         gameView.loadFireworkSprites();
+         gameView.pause();
+      }
+   }
+
+   private void handleGameResume() {
+      if (gameView != null) {
          gameView.resume();
       }
    }
+
+
+
 
    public void saveGameState() {
       SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
@@ -164,20 +159,26 @@ public class GameActivity extends Activity {
       return true;
    }
 
-   @Override
-   public void onBackPressed() {
-      saveGameState();
-      finish();
-   }
 
-
-   @Override
-   protected void onDestroy() {
-      super.onDestroy();
-      if (gameView != null) {
-         gameView.pause();
+   private void loadCards() {
+      List<Map<String, String>> wordPairs = WordList.getWordPairs(this);
+      if (wordPairs != null) {
+         for (Map<String, String> pair : wordPairs) {
+            cards.add(createCard(pair));
+         }
       }
    }
+
+   private Card createCard(Map<String, String> pair) {
+      return new Card(
+              Integer.parseInt(pair.get("id")),
+              pair.get("english"),
+              pair.get("spanish"),
+              false, false, 0, 0, 100, 150, "english"
+      );
+   }
+
+
 
 
 }
